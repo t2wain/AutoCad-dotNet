@@ -1,0 +1,8 @@
+Acmgd.dll
+=========
+
+Autodesk.AutoCAD.ApplicationServices
+
+Application : Autodesk.AutoCAD.ApplicationServices.Core.Application (accoremgd.dll)
+- (Autodesk.AutoCAD.ApplicationServices)
+- (abstract)

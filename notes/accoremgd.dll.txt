@@ -1,0 +1,40 @@
+accoremgd.dll
+=============
+
+Autodesk.AutoCAD.ApplicationServices
+Autodesk.AutoCAD.ApplicationServices.Core
+Autodesk.AutoCAD.EditorInput
+
+
+Application (abstract)
+- (Autodesk.AutoCAD.ApplicationServices.Core)
+- DocumentManager : DocumentCollection (static)
+
+
+DocumentCollection : ICollection
+- MdiActiveDocument : Document
+
+
+Document : DisposableWrapper 
+- Editor : Editor
+- TransactionManager : TransactionManager (Acdbmgd.dll)
+- LockDocument() : DocumentLock
+- DowngradeDocOpen(bool bPromptForSave) : void
+- UpgradeDocOpen() : void
+
+
+Editor
+- (Autodesk.AutoCAD.EditorInput)
+- SelectAll(SelectionFilter filter) : PromptSelectionResult
+
+
+PromptSelectionResult
+- Status : PromptStatus (enum)
+- Value : SelectionSet
+
+
+SelectionSet : ICollection, IDisopsable
+- Count : int
+- IsSynchronized : bool (thread safe)
+- SyncRoot : object
+- this[int index] : SelectedObject

@@ -65,11 +65,11 @@ namespace AutoCadShared
                     bl.Layer,
                     bl.Rotation,
                     Attrs = bl.AttributeCollection
-                            .Cast<ObjectId>()
-                            .Select(attrId => tran.GetObject(attrId, OpenMode.ForRead))
-                            .Cast<AttributeReference>()
-                            .Select(attref => new { attref.Tag, attref.TextString })
-                            .ToList()
+                        .Cast<ObjectId>()
+                        .Select(attrId => tran.GetObject(attrId, OpenMode.ForRead))
+                        .Cast<AttributeReference>()
+                        .Select(attref => new { attref.Tag, attref.TextString })
+                        .ToList()
                 })
                 .ToList();
 
@@ -189,7 +189,8 @@ namespace AutoCadShared
             ));
 
         /// <summary>
-        /// Get a selection of all entities of certain type in the drawing
+        /// Get a selection of all entities of certain type in the drawing.
+        /// return IEnumerable for use with LINQ
         /// </summary>
         public static IEnumerable<SelectedObject> GetSelection(this Document doc, SelectionFilter filter)
         {
@@ -198,7 +199,9 @@ namespace AutoCadShared
 
             if (ssPrompt.Status != PromptStatus.OK)
                 return Array.Empty<SelectedObject>();
-            else return ssPrompt.Value.Cast<SelectedObject>();
+            // ssPrompt.Value return non-generic ICollection : IEnumberable
+            // Cast<> convert to generic IEnumerable for use with most LINQ functions
+            else return ssPrompt.Value.Cast<SelectedObject>(); 
         }
 
         #endregion

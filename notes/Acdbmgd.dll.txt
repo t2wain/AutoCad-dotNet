@@ -1,0 +1,26 @@
+Acdbmgd.dll
+===========
+
+Autodesk.AutoCAD.ApplicationServices
+Autodesk.AutoCAD.GraphicsInterface
+
+TransactionManager : DisposableWrapper
+- StartTransaction() : Transaction
+
+
+Transaction : DisposableWrapper
+- AddNewlyCreatedDBObject(DBObject obj, bool add) : void
+- NumberOfOpenedObjects : int
+- TransactionManager : TransactionManager
+- Abort() : void
+- Commit() : void
+- GetObject(ObjectId id, OpenMode mode) : DBObject
+
+
+DBObject : Drawable
+- Id : ObjectId
+
+
+ObjectId (struct)
+- Handle : Handle
+- ToString() : string
