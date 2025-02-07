@@ -1,4 +1,5 @@
 ﻿using Autodesk.AutoCAD.ApplicationServices;
+using Autodesk.AutoCAD.ApplicationServices.Core;
 using Autodesk.AutoCAD.DatabaseServices;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,6 +8,9 @@ namespace AutoCadShared
 {
     public static class AcadTest
     {
+        public static Document ActiveDocument => 
+            Application.DocumentManager.MdiActiveDocument;
+
         public static void Read(Document doc)
         {
             var lst = AcadRead.LoadPolyLines(doc);
@@ -22,25 +26,48 @@ namespace AutoCadShared
             lst = AcadRead.LoadBlocks(doc, new[] { "Raceway", "Drop", "EquipNode", "RwNode" });
         }
 
-        public static void Write<T>(Document doc, List<(Entity entity, T xdValue)> entities, string appName) 
+        public static void Read2(Document doc)
+        {
+            using (var adoc = new AcadDocument(doc))
+            using (var db = adoc.GetDatabase())
+            {
+                IEnumerable<Entity> lst = adoc.GetPolylines().ToList();
+                lst = adoc.Getlines().ToList();
+                lst = adoc.GetBlocks().ToList();
+                lst = adoc.GetEntities<MText>(DxfEntity.MTEXT).ToList();
+
+                var sel = AcadUtil.GetBlockSelection(doc, new string[] { "Raceway" });
+                lst = db.GetEntities<BlockReference>(sel).ToList();
+
+                sel = AcadUtil.GetBlockSelection(doc, new string[] { "Drop" });
+                lst = db.GetEntities<BlockReference>(sel).ToList();
+
+                sel = AcadUtil.GetBlockSelection(doc, new string[] { "EquipNode" });
+                lst = db.GetEntities<BlockReference>(sel).ToList();
+
+                sel = AcadUtil.GetBlockSelection(doc, new string[] { "RwNode" });
+                lst = db.GetEntities<BlockReference>(sel).ToList();
+
+                sel = AcadUtil.GetBlockSelection(doc, new string[] { "Raceway", "Drop", "EquipNode", "RwNode" });
+                lst = db.GetEntities<BlockReference>(sel).ToList();
+            }
+        }
+
+        public static void Write<T>(Document doc, IEnumerable<(Entity entity, T xdValue)> entities, string appName) 
         { 
             doc.LockDocument();
-            using (var tran = doc.TransactionManager.StartTransaction())
+            using (var adoc = new AcadDocument(doc))
+            using (var db = adoc.GetDatabase())
             {
                 try
                 {
-                    var lst = entities.Select(e => e.entity);
-                    AcadWrite.WriteEntities(doc, lst, tran);
-                    AcadWrite.AddApp(doc, appName, tran);
-                    foreach (var ent in entities)
-                    {
-                        AcadWrite.AddXDataToEntity(doc, ent.entity, appName, ent.xdValue, tran);
-                    }
-                    tran.Commit();
+                    AcadWrite.AddApp(db, appName);
+                    AcadWrite.WriteEntitiesWithXData(db, entities, appName);
+                    db.AcadTran.Commit();
                 }
                 catch
                 {
-                    tran.Abort();
+                    db.AcadTran.Abort();
                     throw;
                 }
             }

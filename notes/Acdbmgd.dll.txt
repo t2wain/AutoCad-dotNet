@@ -24,3 +24,27 @@ DBObject : Drawable
 ObjectId (struct)
 - Handle : Handle
 - ToString() : string
+
+
+SymbolTable
+- Add(SymbolTableRecord)
+- GetEnumerator() : SymbolTableEnumerator 
+- Has(ObjectId) : bool
+- Has(string) : bool
+- this[string] : ObjectId
+
+
+Database
+- BlockTableId : ObjectId
+- RegAppTableId : ObjectId
+
+
+BlockTable : DBObject (SymbolTable)
+- Transaction.GetObject(Database.BlockTableId) as BlockTable
+- this[BlockTableRecord.ModelSpace] : ObjectId (of BlockTableRecord)
+
+
+BlockTableRecord : DBObject (SymbolTableRecord)
+- Transaction.GetObject(BlockTable[BlockTableRecord.ModelSpace]) as BlockTableRecord
+- ModelSpace : string (static)
+- PaperSpace : string (static)

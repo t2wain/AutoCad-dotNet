@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="AcadCollection.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="accoremgd">
       <HintPath>C:\Program Files\Autodesk\AutoCAD 2022\accoremgd.dll</HintPath>
       <Private>False</Private>

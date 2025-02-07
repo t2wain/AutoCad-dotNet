@@ -1,6 +1,5 @@
 ﻿using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.EditorInput;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,13 +19,10 @@ namespace AutoCadShared
         /// </summary>
         public static List<dynamic> LoadBlocks(Document doc)
         {
-            using (var tran = doc.TransactionManager.StartTransaction())
+            using (var acDoc = new AcadDocument(doc))
             {
-                return doc.GetSelection(DxfEntity.INSERT)
-                    .Select(obj => tran.GetObject(obj.ObjectId, OpenMode.ForRead))
-                    .Cast<BlockReference>()
-                    .Where(bl => !bl.Name.Contains("*")) // exclude anonymous blocks
-                    .ReadBlocks(tran);
+                return acDoc.GetBlocks()
+                    .ReadBlocks(acDoc);
             }
         }
 
@@ -41,19 +37,18 @@ namespace AutoCadShared
         /// </summary>
         public static List<dynamic> LoadBlocks(Document doc, string[] blockNames)
         {
-            using (var tran = doc.TransactionManager.StartTransaction())
+            using (var acDoc = new AcadDocument(doc))
             {
-                return doc.GetBlockSelection(blockNames)
-                    .Select(obj => tran.GetObject(obj.ObjectId, OpenMode.ForRead))
-                    .Cast<BlockReference>()
-                    .ReadBlocks(tran);
+                var sel = AcadUtil.GetBlockSelection(doc, blockNames);
+                return acDoc.GetDatabase().GetEntities<BlockReference>(sel)
+                    .ReadBlocks(acDoc);
             }
         }
 
         /// <summary>
         /// Read data from a list of blocks
         /// </summary>
-        static List<dynamic> ReadBlocks(this IEnumerable<BlockReference> blocks, Transaction tran) =>
+        static List<dynamic> ReadBlocks(this IEnumerable<BlockReference> blocks, AcadDocument acDoc) =>
             blocks
                 .Select(bl => (dynamic)new
                 {
@@ -64,10 +59,7 @@ namespace AutoCadShared
                     bl.Name,
                     bl.Layer,
                     bl.Rotation,
-                    Attrs = bl.AttributeCollection
-                        .Cast<ObjectId>()
-                        .Select(attrId => tran.GetObject(attrId, OpenMode.ForRead))
-                        .Cast<AttributeReference>()
+                    Attrs = acDoc.GetBlockAttributes(bl)
                         .Select(attref => new { attref.Tag, attref.TextString })
                         .ToList()
                 })
@@ -78,11 +70,9 @@ namespace AutoCadShared
         /// </summary>
         public static List<dynamic> LoadPolyLines(Document doc)
         {
-            using (var tran = doc.TransactionManager.StartTransaction())
+            using (var acDoc = new AcadDocument(doc))
             {
-                return doc.GetSelection(DxfEntity.LWPOLYLINE)
-                    .Select(obj => tran.GetObject(obj.ObjectId, OpenMode.ForRead))
-                    .Cast<Polyline>()
+                return acDoc.GetPolylines()
                     .Select(pl => (dynamic) new
                         {
                             pl.Id,
@@ -103,11 +93,9 @@ namespace AutoCadShared
         /// </summary>
         public static List<dynamic> LoadLines(Document doc)
         {
-            using (var tran = doc.TransactionManager.StartTransaction())
+            using (var acDoc = new AcadDocument(doc))
             {
-                return doc.GetSelection(DxfEntity.LINE)
-                    .Select(obj => tran.GetObject(obj.ObjectId, OpenMode.ForRead))
-                    .Cast<Line>()
+                return acDoc.Getlines()
                     .Select(line => (dynamic) new 
                         {
                             line.Id,
@@ -129,11 +117,9 @@ namespace AutoCadShared
         /// </summary>
         public static List<dynamic> LoadMText(Document doc)
         {
-            using (var tran = doc.TransactionManager.StartTransaction())
+            using (var acDoc = new AcadDocument(doc))
             {
-                return doc.GetSelection(DxfEntity.MTEXT)
-                    .Select(obj => tran.GetObject(obj.ObjectId, OpenMode.ForRead))
-                    .Cast<MText>()
+                return acDoc.GetEntities<MText>(DxfEntity.MTEXT)
                     .Select(mt => (dynamic) new 
                         {
                             mt.Id,
@@ -149,59 +135,6 @@ namespace AutoCadShared
                         })
                     .ToList();
             }
-        }
-
-        #endregion
-
-        #region Entity Selection
-
-        /// <summary>
-        /// Select block entities by block names
-        /// </summary>
-        public static IEnumerable<SelectedObject> GetBlockSelection(this Document doc, string[] blockNames)
-        {
-            var q = new TypedValue[]
-            {
-                new TypedValue((int)DxfCode.Operator, "<AND"),
-                new TypedValue((int)DxfCode.Start, DxfEntity.INSERT.ToString()),
-                new TypedValue((int)DxfCode.Operator, "<OR"),
-            }
-            .Concat(blockNames.Select(n => new TypedValue((int)DxfCode.BlockName, n)))
-            .Concat(new TypedValue[]
-            {
-                new TypedValue((int)DxfCode.Operator, "OR>"),
-                new TypedValue((int)DxfCode.Operator, "AND>")
-            });
-
-            var filter = new SelectionFilter(q.ToArray());
-            return doc.GetSelection(filter);
-        }
-
-        /// <summary>
-        /// Get a selection of all entities of certain type in the drawing
-        /// </summary>
-        public static IEnumerable<SelectedObject> GetSelection(this Document doc, DxfEntity dxfEntity) =>
-            doc.GetSelection(new SelectionFilter(
-                new TypedValue[] 
-                { 
-                    new TypedValue((int)DxfCode.Start, dxfEntity.ToString())
-                }
-            ));
-
-        /// <summary>
-        /// Get a selection of all entities of certain type in the drawing.
-        /// return IEnumerable for use with LINQ
-        /// </summary>
-        public static IEnumerable<SelectedObject> GetSelection(this Document doc, SelectionFilter filter)
-        {
-            // select entities based on filter
-            PromptSelectionResult ssPrompt = doc.Editor.SelectAll(filter);
-
-            if (ssPrompt.Status != PromptStatus.OK)
-                return Array.Empty<SelectedObject>();
-            // ssPrompt.Value return non-generic ICollection : IEnumberable
-            // Cast<> convert to generic IEnumerable for use with most LINQ functions
-            else return ssPrompt.Value.Cast<SelectedObject>(); 
         }
 
         #endregion

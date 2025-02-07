@@ -1,7 +1,6 @@
 
-using Autodesk.AutoCAD.Runtime;
-using Autodesk.AutoCAD.ApplicationServices;
 using AutoCadShared;
+using Autodesk.AutoCAD.Runtime;
 
 namespace AutoCadLib
 {
@@ -10,7 +9,7 @@ namespace AutoCadLib
         [CommandMethod("RunTest")]
         public static void RunTest()
         {
-            var doc = Application.DocumentManager.MdiActiveDocument;
+            var doc = AcadTest.ActiveDocument;
             AcadTest.Read(doc);
         }
     }
