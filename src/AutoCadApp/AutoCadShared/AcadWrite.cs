@@ -5,7 +5,8 @@ using System.Linq;
 namespace AutoCadShared
 {
     /// <summary>
-    /// Write data to document. Be sure document is locked first.
+    /// Typical steps to write data to document. 
+    /// Be sure document is locked first.
     /// </summary>
     public static class AcadWrite
     {

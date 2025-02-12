@@ -4,6 +4,10 @@ using System.Linq;
 
 namespace AutoCadShared
 {
+    /// <summary>
+    /// Navigating the AutoCAD collections.
+    /// From ObjectId, retrieve DBObject, then cast to correct entity types
+    /// </summary>
     public static class AcadCollection
     {
         #region Standard Table

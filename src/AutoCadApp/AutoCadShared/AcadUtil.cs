@@ -18,15 +18,15 @@ namespace AutoCadShared
         {
             var q = new TypedValue[]
             {
-                new TypedValue((int)DxfCode.Operator, "<AND"),
+                new TypedValue((int)DxfCode.Operator, DxfCodeOperator.AND1),
                 new TypedValue((int)DxfCode.Start, DxfEntity.INSERT.ToString()),
-                new TypedValue((int)DxfCode.Operator, "<OR"),
+                new TypedValue((int)DxfCode.Operator, DxfCodeOperator.OR1),
             }
             .Concat(blockNames.Select(n => new TypedValue((int)DxfCode.BlockName, n)))
             .Concat(new TypedValue[]
             {
-                new TypedValue((int)DxfCode.Operator, "OR>"),
-                new TypedValue((int)DxfCode.Operator, "AND>")
+                new TypedValue((int)DxfCode.Operator, DxfCodeOperator.OR1),
+                new TypedValue((int)DxfCode.Operator, DxfCodeOperator.AND1)
             });
 
             var filter = new SelectionFilter(q.ToArray());

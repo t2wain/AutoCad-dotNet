@@ -6,6 +6,10 @@ using System.Linq;
 
 namespace AutoCadShared
 {
+    /// <summary>
+    /// Group convenience methods that depend 
+    /// on Database and Transaction
+    /// </summary>
     public class AcadDatabase : IDisposable
     {
         #region Init
@@ -80,11 +84,23 @@ namespace AutoCadShared
             GetObject<BlockTableRecord>(bt[BlockTableRecord.ModelSpace], mode);
 
         /// <summary>
+        /// Get the Model Space BlockTableRecord
+        /// </summary>
+        public BlockTableRecord GetModelSpaceBlockTableRecord(OpenMode mode = OpenMode.ForRead) =>
+            GetObject<BlockTableRecord>(GetBlockTable(mode)[BlockTableRecord.ModelSpace], mode);
+
+        /// <summary>
         /// Get the Paper Space BlockTableRecord
         /// </summary>
         public BlockTableRecord GetPaperSpaceBlockTableRecord(BlockTable bt,
             OpenMode mode = OpenMode.ForRead) =>
             GetObject<BlockTableRecord>(bt[BlockTableRecord.PaperSpace], mode);
+
+        /// <summary>
+        /// Get the Paper Space BlockTableRecord
+        /// </summary>
+        public BlockTableRecord GetPaperSpaceBlockTableRecord(OpenMode mode = OpenMode.ForRead) =>
+            GetObject<BlockTableRecord>(GetBlockTable(mode)[BlockTableRecord.PaperSpace], mode);
 
         /// <summary>
         /// Get RegAppTable

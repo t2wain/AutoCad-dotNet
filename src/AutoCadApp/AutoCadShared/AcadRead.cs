@@ -7,7 +7,7 @@ using System.Linq;
 namespace AutoCadShared
 {
     /// <summary>
-    /// Learn to read data from entities in drawing
+    /// Typical steps to read data from entities in drawing
     /// </summary>
     public static class AcadRead
     {
@@ -138,6 +138,21 @@ namespace AutoCadShared
         }
 
         #endregion
+
+        public static void ReadObjectCollection(Document doc)
+        {
+            using (var acDoc = new AcadDocument(doc))
+            using (var acDB = acDoc.GetDatabase())
+            {
+                var lt = acDB.GetObject<LayerTable>(AcadCollection.GetLayerTable(doc.Database));
+                var ltrs = acDB.GetDBOjects(lt.Cast<ObjectId>()).Cast<LayerTableRecord>().ToList();
+                var names = ltrs.Select(l => l.Name).ToList();
+
+                var bt = acDB.GetObject<BlockTable>(AcadCollection.GetBlockTable(doc.Database));
+                var btrs = acDB.GetDBOjects(bt.Cast<ObjectId>()).Cast<BlockTableRecord>().ToList();
+                names = btrs.Select(b => b.Name).ToList();
+            }
+        }
     }
 }
 

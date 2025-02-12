@@ -1,13 +1,15 @@
 ﻿using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.ApplicationServices.Core;
 using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.EditorInput;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace AutoCadShared
 {
+    /// <summary>
+    /// Provide convenience methods to read data
+    /// </summary>
     public class AcadDocument : IDisposable
     {
         #region Init

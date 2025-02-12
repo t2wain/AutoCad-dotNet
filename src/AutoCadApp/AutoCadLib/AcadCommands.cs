@@ -9,8 +9,7 @@ namespace AutoCadLib
         [CommandMethod("RunTest")]
         public static void RunTest()
         {
-            var doc = AcadTest.ActiveDocument;
-            AcadTest.Read(doc);
+            AcadTest.Run();
         }
     }
 

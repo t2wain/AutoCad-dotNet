@@ -8,9 +8,32 @@ namespace AutoCadShared
 {
     public static class AcadTest
     {
+        public static void Run()
+        {
+            // During debug, change this value
+            // at break point to run other test
+            var testNo = 0;
+            switch (testNo)
+            {
+                case 1:
+                    Read2(ActiveDocument);
+                    break;
+                case 2:
+                    AcadRead.ReadObjectCollection(ActiveDocument);
+                    break;
+                default:
+                    Read(ActiveDocument);
+                    break;
+            }
+        }
+
         public static Document ActiveDocument => 
             Application.DocumentManager.MdiActiveDocument;
 
+        /// <summary>
+        /// Read data of entity
+        /// </summary>
+        /// <param name="doc"></param>
         public static void Read(Document doc)
         {
             var lst = AcadRead.LoadPolyLines(doc);
@@ -26,6 +49,10 @@ namespace AutoCadShared
             lst = AcadRead.LoadBlocks(doc, new[] { "Raceway", "Drop", "EquipNode", "RwNode" });
         }
 
+        /// <summary>
+        /// Select entity using filtering
+        /// </summary>
+        /// <param name="doc"></param>
         public static void Read2(Document doc)
         {
             using (var adoc = new AcadDocument(doc))
@@ -53,7 +80,11 @@ namespace AutoCadShared
             }
         }
 
-        public static void Write<T>(Document doc, IEnumerable<(Entity entity, T xdValue)> entities, string appName) 
+        /// <summary>
+        /// Steps to write data
+        /// </summary>
+        public static void Write<T>(Document doc, 
+            IEnumerable<(Entity entity, T xdValue)> entities, string appName) 
         { 
             doc.LockDocument();
             using (var adoc = new AcadDocument(doc))
