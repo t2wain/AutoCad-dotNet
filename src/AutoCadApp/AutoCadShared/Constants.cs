@@ -98,6 +98,37 @@ namespace AutoCadShared
     }
 
     /// <summary>
+    /// Symbol names and strings in selection filters can include wild-card patterns.
+    /// 
+    /// # (pound) : Matches any single numeric digit
+    /// @ (at) : Matches any single alphabetic character
+    /// . (period) : Matches any single non-alphanumeric character
+    /// * (asterisk) : Matches any character sequence, including an empty one, and it can be used anywhere in the search pattern: at the beginning, middle, or end
+    /// ? (question mark) : Matches any single character
+    /// ~ (tilde) : If it is the first character in the pattern, it matches anything except the pattern
+    /// [...] : Matches any one of the characters enclosed
+    /// [~...] : Matches any single character not enclosed
+    /// - (hyphen) : Used inside brackets to specify a range for a single character
+    /// , (comma) : Separates two patterns
+    /// `(reverse quote) : Escapes special characters (reads next character literally)
+    /// </summary>
+    public enum DxfCodeText
+    {
+        /// <summary>
+        /// 2 : string
+        /// </summary>
+        BlockName = DxfCode.BlockName,
+
+        /// <summary>
+        /// 8 : string : "Layer 0"
+        /// </summary>
+        LayerName = DxfCode.LayerName,
+
+        Text = DxfCode.Text,
+
+    }
+
+    /// <summary>
     /// Common operator (DxfCode.Operator) 
     /// used for entity filtering
     /// </summary>

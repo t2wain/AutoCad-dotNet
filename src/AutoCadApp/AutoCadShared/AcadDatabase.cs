@@ -31,7 +31,7 @@ namespace AutoCadShared
 
         public Transaction AcadTran => _acTran;
 
-        protected Database AcadDB => _acDB;
+        public Database AcadDB => _acDB;
 
         #endregion
 
@@ -62,9 +62,9 @@ namespace AutoCadShared
         /// <summary>
         /// Get a DBObject given an ObjectId
         /// </summary>
-        public IEnumerable<DBObject> GetDBOjects(IEnumerable<ObjectId> objIds,
+        public IEnumerable<DBObject> GetDBOjects(ObjectIdCollection objIds,
             OpenMode mode = OpenMode.ForRead) =>
-            objIds.Select(obj => GetDBObject(obj, mode));
+            objIds.Cast<ObjectId>().Select(obj => GetDBObject(obj, mode)).ToList();
 
         #endregion
 

@@ -46,5 +46,6 @@ BlockTable : DBObject (SymbolTable)
 
 BlockTableRecord : DBObject (SymbolTableRecord)
 - Transaction.GetObject(BlockTable[BlockTableRecord.ModelSpace]) as BlockTableRecord
+- AppendEntity(Entity) : ObjectId
 - ModelSpace : string (static)
 - PaperSpace : string (static)

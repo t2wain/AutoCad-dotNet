@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\AutoCadShared\AutoCadShared.csproj" />
+    <ProjectReference Include="..\AcadTest\AcadTest.csproj" />
   </ItemGroup>
 
   <ItemGroup>

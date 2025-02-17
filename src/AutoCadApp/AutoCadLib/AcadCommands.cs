@@ -1,5 +1,4 @@
-
-using AutoCadShared;
+using AcadTest;
 using Autodesk.AutoCAD.Runtime;
 
 namespace AutoCadLib
@@ -9,7 +8,7 @@ namespace AutoCadLib
         [CommandMethod("RunTest")]
         public static void RunTest()
         {
-            AcadTest.Run();
+            Test.Run();
         }
     }
 

@@ -47,19 +47,31 @@ namespace AutoCadShared
         /// <summary>
         /// Get all BlockTableRecord
         /// </summary>
-        public static IEnumerable<ObjectId> GetBlockTableRecords(BlockTable bt) =>
-            bt.Cast<ObjectId>();
+        public static ObjectIdCollection GetBlockTableRecords(BlockTable bt) =>
+            bt.Cast<ObjectId>().Aggregate(new ObjectIdCollection(), (col, id) => 
+            { 
+                col.Add(id);
+                return col;
+            });
 
         /// <summary>
         /// Get all entities of a BlockTableRecord
         /// </summary>
-        public static IEnumerable<ObjectId> GetEntities(BlockTableRecord btr) =>
-            btr.Cast<ObjectId>();
+        public static ObjectIdCollection GetEntities(BlockTableRecord btr) =>
+            btr.Cast<ObjectId>().Aggregate(new ObjectIdCollection(), (col, id) =>
+            {
+                col.Add(id);
+                return col;
+            });
 
         /// <summary>
         /// Get all LayerTableRecord
         /// </summary>
-        public static IEnumerable<ObjectId> GetLayerTableRecord(LayerTable ltr) => 
-            ltr.Cast<ObjectId>();
+        public static ObjectIdCollection GetLayerTableRecord(LayerTable ltr) => 
+            ltr.Cast<ObjectId>().Aggregate(new ObjectIdCollection(), (col, id) =>
+            {
+                col.Add(id);
+                return col;
+            });
     }
 }

@@ -3,6 +3,8 @@ using Autodesk.AutoCAD.DatabaseServices;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ACOL = AutoCadShared.AcadCollection;
+
 
 namespace AutoCadShared
 {
@@ -53,6 +55,9 @@ namespace AutoCadShared
                 .Select(bl => (dynamic)new
                 {
                     bl.Id,
+                    bl.BlockId,
+                    bl.BlockName,
+                    bl.BlockTableRecord,
                     PosX = bl.Position.X,
                     PosY = bl.Position.Y,
                     PosZ = bl.Position.Z,
@@ -76,6 +81,8 @@ namespace AutoCadShared
                     .Select(pl => (dynamic) new
                         {
                             pl.Id,
+                            pl.BlockId,
+                            pl.BlockName,
                             pl.Layer,
                             pl.Linetype,
                             pl.Length,
@@ -99,6 +106,8 @@ namespace AutoCadShared
                     .Select(line => (dynamic) new 
                         {
                             line.Id,
+                            line.BlockId,
+                            line.BlockName,
                             StartX = line.StartPoint.X,
                             StartY = line.StartPoint.Y,
                             EndX = line.EndPoint.X,
@@ -123,6 +132,8 @@ namespace AutoCadShared
                     .Select(mt => (dynamic) new 
                         {
                             mt.Id,
+                            mt.BlockId,
+                            mt.BlockName,
                             LocX = mt.Location.X,
                             LocY = mt.Location.Y,
                             mt.Layer,
@@ -144,12 +155,12 @@ namespace AutoCadShared
             using (var acDoc = new AcadDocument(doc))
             using (var acDB = acDoc.GetDatabase())
             {
-                var lt = acDB.GetObject<LayerTable>(AcadCollection.GetLayerTable(doc.Database));
-                var ltrs = acDB.GetDBOjects(lt.Cast<ObjectId>()).Cast<LayerTableRecord>().ToList();
+                var lt = acDB.GetObject<LayerTable>(ACOL.GetLayerTable(doc.Database));
+                var ltrs = acDB.GetDBOjects(ACOL.GetLayerTableRecord(lt)).Cast<LayerTableRecord>();
                 var names = ltrs.Select(l => l.Name).ToList();
 
-                var bt = acDB.GetObject<BlockTable>(AcadCollection.GetBlockTable(doc.Database));
-                var btrs = acDB.GetDBOjects(bt.Cast<ObjectId>()).Cast<BlockTableRecord>().ToList();
+                var bt = acDB.GetObject<BlockTable>(ACOL.GetBlockTable(doc.Database));
+                var btrs = acDB.GetDBOjects(ACOL.GetBlockTableRecords(bt)).Cast<BlockTableRecord>();
                 names = btrs.Select(b => b.Name).ToList();
             }
         }
