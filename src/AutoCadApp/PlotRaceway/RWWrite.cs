@@ -13,13 +13,13 @@ namespace PlotRaceway
     {
         #region Node block
 
-        static IEnumerable<BlockReference> BuildNodeBlock(AcadDatabase acDB, 
-            IEnumerable<Node> nodes, BlockTable bt, BlockEnum blockName, LayerEnum layerName) =>
-            nodes.Where(n => bt.Has(n.NodeType))
-                .Select(n => BuildNodeBlock(acDB, n, bt, blockName, layerName));
+        static IEnumerable<BlockReference> BuildNodeBlock(AcadDatabase acDB, IEnumerable<Node> nodes, 
+            BlockTable bt, BlockEnum blockName, LayerEnum layerName, BlockTableRecord attachBTR) =>
+            nodes.Where(n => bt.Has(blockName.ToString()))
+                .Select(n => BuildNodeBlock(acDB, n, bt, blockName, layerName, attachBTR));
         
-        static BlockReference BuildNodeBlock(AcadDatabase acDB,
-            Node node, BlockTable bt, BlockEnum blockName, LayerEnum layerName)
+        static BlockReference BuildNodeBlock(AcadDatabase acDB, Node node, 
+            BlockTable bt, BlockEnum blockName, LayerEnum layerName, BlockTableRecord attachBTR)
         {
 
             // each block reference is a block table record
@@ -30,12 +30,8 @@ namespace PlotRaceway
             // on the block table record
             var bref = new BlockReference(new Point3d(node.X, node.Y, node.Z), btrId);
             bref.Layer = layerName.ToString();
-
-            foreach (var attr in bref.AttributeCollection.Cast<ObjectId>())
-            {
-                var attRef = acDB.GetObject<AttributeReference>(attr, OpenMode.ForWrite);
-                UpdateAttr(attRef, node.Tag, node.ID);
-            }
+            acDB.AddEntity(attachBTR, bref);
+            UpdateAttr(acDB, bref, (node.Tag, node.ID));
             return bref;
         }
 
@@ -43,13 +39,13 @@ namespace PlotRaceway
 
         #region Raceway block
 
-        static IEnumerable<BlockReference> BuildRacewayBlock(AcadDatabase acDB, 
-            IEnumerable<Raceway> raceways, BlockTable bt, BlockEnum blockName, LayerEnum layerName) =>
-            raceways.Where(r => bt.Has(r.Type))
-                .Select(r => BuildRacewayBlock(acDB, r, bt, blockName, layerName));
+        static IEnumerable<BlockReference> BuildRacewayBlock(AcadDatabase acDB, IEnumerable<Raceway> raceways, 
+            BlockTable bt, BlockEnum blockName, LayerEnum layerName, BlockTableRecord attachBTR) =>
+            raceways.Where(r => bt.Has(blockName.ToString()))
+                .Select(r => BuildRacewayBlock(acDB, r, bt, blockName, layerName, attachBTR));
 
-        static BlockReference BuildRacewayBlock(AcadDatabase acDB,
-            Raceway raceway, BlockTable bt, BlockEnum blockName, LayerEnum layerName)
+        static BlockReference BuildRacewayBlock(AcadDatabase acDB, Raceway raceway, 
+            BlockTable bt, BlockEnum blockName, LayerEnum layerName, BlockTableRecord attachBTR)
         {
             // each block reference is a block table record
             // contains the entities defined for the block reference
@@ -59,40 +55,36 @@ namespace PlotRaceway
             // on the block table record
             var bref = new BlockReference(new Point3d(0, 0, 0), btrId);
             bref.Layer = layerName.ToString();
-
-            foreach (var attr in bref.AttributeCollection.Cast<ObjectId>())
-            {
-                var attRef = acDB.GetObject<AttributeReference>(attr, OpenMode.ForWrite);
-                UpdateAttr(attRef, raceway.Tag, raceway.ID);
-                ApplyTransform(attRef, raceway);
-            }
+            ApplyTransform(bref, raceway);
+            acDB.AddEntity(attachBTR, bref);
+            UpdateAttr(acDB, bref, (raceway.Tag, raceway.ID));
             return bref;
         }
         
         static IEnumerable<BlockReference> BuildRaceway(this IEnumerable<Raceway> raceway, 
-            AcadDatabase acDB, BlockTable bt)
+            AcadDatabase acDB, BlockTable bt, BlockTableRecord attachBTR)
         {
             IEnumerable<BlockReference> lstBlk = Array.Empty<BlockReference>();
 
             if (raceway.GetTray() is IEnumerable<Raceway> trays && trays.Count() > 0)
             {
                 var rwNodes = trays.GetNodes();
-                var blkRwNodes = BuildNodeBlock(acDB, rwNodes, bt, BlockEnum.RwNode, LayerEnum.RwNode);
-                var blkRw = BuildRacewayBlock(acDB, trays, bt, BlockEnum.Raceway, LayerEnum.Raceway);
+                var blkRwNodes = BuildNodeBlock(acDB, rwNodes, bt, BlockEnum.RwNode, LayerEnum.RwNode, attachBTR);
+                var blkRw = BuildRacewayBlock(acDB, trays, bt, BlockEnum.Raceway, LayerEnum.Raceway, attachBTR);
                 lstBlk = lstBlk.Concat(blkRwNodes).Concat(blkRw);
             }
 
             if (raceway.GetJump() is IEnumerable<Raceway> jumps && jumps.Count() > 0)
             {
-                var blkJump = BuildRacewayBlock(acDB, jumps, bt, BlockEnum.Drop, LayerEnum.Drop);
+                var blkJump = BuildRacewayBlock(acDB, jumps, bt, BlockEnum.Drop, LayerEnum.Drop, attachBTR);
                 lstBlk = lstBlk.Concat(blkJump);
             }
 
             if (raceway.GetDrop() is IEnumerable<Raceway> drops && drops.Count() > 0)
             {
                 var rwEqNodes = drops.GetNodes().GetEquipNodes();
-                var blkEqNodes = BuildNodeBlock(acDB, rwEqNodes, bt, BlockEnum.EquipNode, LayerEnum.EquipNode);
-                var blkDrop = BuildRacewayBlock(acDB, drops, bt, BlockEnum.Drop, LayerEnum.Drop);
+                var blkEqNodes = BuildNodeBlock(acDB, rwEqNodes, bt, BlockEnum.EquipNode, LayerEnum.EquipNode, attachBTR);
+                var blkDrop = BuildRacewayBlock(acDB, drops, bt, BlockEnum.Drop, LayerEnum.Drop, attachBTR);
                 lstBlk = lstBlk.Concat(blkEqNodes).Concat(blkDrop);
             }
 
@@ -102,6 +94,15 @@ namespace PlotRaceway
         #endregion
 
         #region Common
+
+        static void UpdateAttr(AcadDatabase acDB, BlockReference bref, (string Tag, int ID) data)
+        {
+            foreach (var attr in bref.AttributeCollection.Cast<ObjectId>())
+            {
+                var attRef = acDB.GetObject<AttributeReference>(attr, OpenMode.ForWrite);
+                UpdateAttr(attRef, data.Tag, data.ID);
+            }
+        }
 
         static void UpdateAttr(AttributeReference attRef, string tag, int id)
         {
@@ -135,18 +136,18 @@ namespace PlotRaceway
             ent.TransformBy(Matrix3d.Displacement(pf - p0));
         }
 
-        static void SaveData(AcadDatabase acDB, IEnumerable<BlockReference> lstBlk)
+        static void SaveData(AcadDatabase acDB, IEnumerable<Entity> lstEntity)
         {
             // model space block table record
-            var ms = acDB.GetModelSpaceBlockTableRecord(OpenMode.ForWrite);
+            //var ms = acDB.GetModelSpaceBlockTableRecord(OpenMode.ForWrite);
             try
             {
-                foreach (var bref in lstBlk)
+                foreach (var ent in lstEntity)
                 {
                     // attach block instance to model space
-                    ms.AppendEntity(bref);
-                    acDB.AcadTran.AddNewlyCreatedDBObject(bref, true);
-                    bref.Dispose();
+                    //ms.AppendEntity(ent);
+                    //acDB.AcadTran.AddNewlyCreatedDBObject(ent, true);
+                    ent.Dispose();
                 }
                 acDB.AcadTran.Commit();
             }
@@ -166,7 +167,8 @@ namespace PlotRaceway
             using (var acDB = acDoc.GetDatabase())
             {
                 var bt = acDB.GetBlockTable();
-                var lstBlk = raceways.BuildRaceway(acDB, bt);
+                var ms = acDB.GetModelSpaceBlockTableRecord(OpenMode.ForWrite);
+                var lstBlk = raceways.BuildRaceway(acDB, bt, ms);
                 SaveData(acDB, lstBlk);
             }
         }

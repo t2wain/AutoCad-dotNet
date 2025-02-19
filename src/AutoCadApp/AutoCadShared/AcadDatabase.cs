@@ -130,6 +130,9 @@ namespace AutoCadShared
             AcadTran.AddNewlyCreatedDBObject(ent, true);
         }
 
+        public void AddEntityToModelSpace(Entity ent) => 
+            AddEntity(GetModelSpaceBlockTableRecord(), ent);
+
         /// <summary>
         /// Add xdata to an entity. Be sure an app record
         /// for the app name already existed.

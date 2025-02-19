@@ -3,6 +3,7 @@ using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.ApplicationServices.Core;
 using Autodesk.AutoCAD.DatabaseServices;
 using PlotRaceway;
+using RacewayDataLib;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -28,6 +29,9 @@ namespace AcadTest
                     break;
                 case 4:
                     RWRead.Read2(ActiveDocument);
+                    break;
+                case 5:
+                    PlotRW(ActiveDocument);
                     break;
                 default:
                     Read(ActiveDocument);
@@ -88,6 +92,14 @@ namespace AcadTest
                     throw;
                 }
             }
+        }
+
+        public static void PlotRW(Document doc)
+        {
+            var config = new DataConfig();
+            var repo = NetworkDB.LoadData(config);
+            var lstRw = repo.Raceways.Where(rw => rw.Systems.Contains(4)).ToList();
+            RWWrite.WriteNetwork(doc, lstRw);
         }
     }
 }

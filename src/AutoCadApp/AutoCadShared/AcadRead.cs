@@ -159,27 +159,45 @@ namespace AutoCadShared
             using (var acDB = acDoc.GetDatabase())
             {
                 var lt = acDB.GetObject<LayerTable>(ACOL.GetLayerTable(doc.Database));
-                var ltrs = acDB.GetDBOjects(ACOL.GetLayerTableRecord(lt)).Cast<LayerTableRecord>();
+                var ltrs = acDB.GetDBOjects(ACOL.GetLayerTableRecord(lt)).Cast<LayerTableRecord>().ToList();
                 var names = ltrs.Select(l => l.Name).ToList();
 
                 var bt = acDB.GetObject<BlockTable>(ACOL.GetBlockTable(doc.Database));
-                var btrs = acDB.GetDBOjects(ACOL.GetBlockTableRecords(bt)).Cast<BlockTableRecord>();
+                var btrs = acDB.GetDBOjects(ACOL.GetBlockTableRecords(bt)).Cast<BlockTableRecord>().ToList();
                 names = btrs.Select(b => b.Name).ToList();
 
                 // Model Space
-                var btrMS = btrs.Where(btr => btr.Name == BlockTableRecord.ModelSpace).First();
+                var btrMS = btrs.Where(btr => btr.Name.Equals(BlockTableRecord.ModelSpace, StringComparison.OrdinalIgnoreCase)).First();
                 var msCnt = ACOL.GetEntities(btrMS).Count; // entity count
 
                 // Paper Space
-                var btrPS = btrs.Where(btr => btr.Name == BlockTableRecord.PaperSpace).First();
+                var btrPS = btrs.Where(btr => btr.Name.Equals(BlockTableRecord.PaperSpace, StringComparison.OrdinalIgnoreCase)).First();
                 var psCnt = ACOL.GetEntities(btrPS).Count; // entity count
 
                 // Block templates
-                var qbtrs = btrs.Where(btr => btr.Name != BlockTableRecord.ModelSpace 
-                    && btr.Name != BlockTableRecord.PaperSpace);
+                var qbtrs = btrs.Where(btr => !btr.Name.Equals(BlockTableRecord.ModelSpace, StringComparison.OrdinalIgnoreCase)
+                    && !btr.Name.Equals(BlockTableRecord.PaperSpace, StringComparison.OrdinalIgnoreCase)).ToList();
                 foreach (var btr in qbtrs)
                 {
-                    var name = btr.Name;
+                    var data = new
+                    {
+                        btr.Name,
+                        btr.Explodable,
+                        btr.HasAttributeDefinitions,
+                        btr.HasPreviewIcon,
+                        btr.IsAnonymous,
+                        btr.IsDynamicBlock,
+                        btr.IsFromExternalReference,
+                        btr.IsFromOverlayReference,
+                        btr.IsLayout,
+                        btr.Origin,
+                        btr.PathName,
+                        btr.XrefStatus,
+                        AnonymousBlockIds = btr.GetAnonymousBlockIds().Count,
+                        BlockReferenceIds = btr.GetBlockReferenceIds(false,false).Count,
+                        ErasedBlockReferenceIds = btr.GetErasedBlockReferenceIds().Count,
+                    };
+                    
                     var ids = ACOL.GetEntities(btr); // entities defined in block template
                     var ents = acDB.GetDBOjects(ids).ToList();
                 }

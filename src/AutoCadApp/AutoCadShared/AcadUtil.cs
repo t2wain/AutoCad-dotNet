@@ -25,8 +25,8 @@ namespace AutoCadShared
             .Concat(blockNames.Select(n => new TypedValue((int)DxfCode.BlockName, n)))
             .Concat(new TypedValue[]
             {
-                new TypedValue((int)DxfCode.Operator, DxfCodeOperator.OR1),
-                new TypedValue((int)DxfCode.Operator, DxfCodeOperator.AND1)
+                new TypedValue((int)DxfCode.Operator, DxfCodeOperator.OR2),
+                new TypedValue((int)DxfCode.Operator, DxfCodeOperator.AND2)
             });
 
             var filter = new SelectionFilter(q.ToArray());
