@@ -14,12 +14,18 @@ namespace PlotRaceway
         /// <param name="doc"></param>
         public static void Read(Document doc)
         {
-            var lst = AcadRead.LoadBlocks(doc, "Raceway");
-            lst = AcadRead.LoadBlocks(doc, "Drop");
-            lst = AcadRead.LoadBlocks(doc, "EquipNode");
-            lst = AcadRead.LoadBlocks(doc, "RwNode");
+            var lst = AcadRead.LoadBlocks(doc, BlockEnum.Raceway.ToString());
+            lst = AcadRead.LoadBlocks(doc, BlockEnum.Drop.ToString());
+            lst = AcadRead.LoadBlocks(doc, BlockEnum.EquipNode.ToString());
+            lst = AcadRead.LoadBlocks(doc, BlockEnum.RwNode.ToString());
 
-            lst = AcadRead.LoadBlocks(doc, new[] { "Raceway", "Drop", "EquipNode", "RwNode" });
+            lst = AcadRead.LoadBlocks(doc, new[] 
+            {
+                BlockEnum.Raceway.ToString(),
+                BlockEnum.Drop.ToString(),
+                BlockEnum.EquipNode.ToString(),
+                BlockEnum.RwNode.ToString()
+            });
         }
 
         /// <summary>
@@ -31,19 +37,25 @@ namespace PlotRaceway
             using (var adoc = new AcadDocument(doc))
             using (var db = adoc.GetDatabase())
             {
-                var sel = AcadUtil.GetBlockSelection(doc, new string[] { "Raceway" });
-                IEnumerable<Entity> lst = db.GetEntities<BlockReference>(sel).ToList();
+                var sel = AcadUtil.GetBlockSelection(doc, new string[] { BlockEnum.Raceway.ToString() });
+                IEnumerable<BlockReference> lst = db.GetEntities<BlockReference>(sel).ToList();
 
-                sel = AcadUtil.GetBlockSelection(doc, new string[] { "Drop" });
+                sel = AcadUtil.GetBlockSelection(doc, new string[] { BlockEnum.Drop.ToString() });
                 lst = db.GetEntities<BlockReference>(sel).ToList();
 
-                sel = AcadUtil.GetBlockSelection(doc, new string[] { "EquipNode" });
+                sel = AcadUtil.GetBlockSelection(doc, new string[] { BlockEnum.EquipNode.ToString() });
                 lst = db.GetEntities<BlockReference>(sel).ToList();
 
-                sel = AcadUtil.GetBlockSelection(doc, new string[] { "RwNode" });
+                sel = AcadUtil.GetBlockSelection(doc, new string[] { BlockEnum.RwNode.ToString() });
                 lst = db.GetEntities<BlockReference>(sel).ToList();
 
-                sel = AcadUtil.GetBlockSelection(doc, new string[] { "Raceway", "Drop", "EquipNode", "RwNode" });
+                sel = AcadUtil.GetBlockSelection(doc, new string[] 
+                {
+                    BlockEnum.Raceway.ToString(),
+                    BlockEnum.Drop.ToString(),
+                    BlockEnum.EquipNode.ToString(),
+                    BlockEnum.RwNode.ToString()
+                });
                 lst = db.GetEntities<BlockReference>(sel).ToList();
             }
         }

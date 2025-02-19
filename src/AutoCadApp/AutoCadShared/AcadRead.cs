@@ -50,7 +50,7 @@ namespace AutoCadShared
         /// <summary>
         /// Read data from a list of blocks
         /// </summary>
-        static List<dynamic> ReadBlocks(this IEnumerable<BlockReference> blocks, AcadDocument acDoc) =>
+        public static List<dynamic> ReadBlocks(this IEnumerable<BlockReference> blocks, AcadDocument acDoc) =>
             blocks
                 .Select(bl => (dynamic)new
                 {
@@ -150,6 +150,9 @@ namespace AutoCadShared
 
         #endregion
 
+        /// <summary>
+        /// Explore the standard collection of objects in the drawing
+        /// </summary>
         public static void ReadObjectCollection(Document doc)
         {
             using (var acDoc = new AcadDocument(doc))
@@ -162,6 +165,24 @@ namespace AutoCadShared
                 var bt = acDB.GetObject<BlockTable>(ACOL.GetBlockTable(doc.Database));
                 var btrs = acDB.GetDBOjects(ACOL.GetBlockTableRecords(bt)).Cast<BlockTableRecord>();
                 names = btrs.Select(b => b.Name).ToList();
+
+                // Model Space
+                var btrMS = btrs.Where(btr => btr.Name == BlockTableRecord.ModelSpace).First();
+                var msCnt = ACOL.GetEntities(btrMS).Count; // entity count
+
+                // Paper Space
+                var btrPS = btrs.Where(btr => btr.Name == BlockTableRecord.PaperSpace).First();
+                var psCnt = ACOL.GetEntities(btrPS).Count; // entity count
+
+                // Block templates
+                var qbtrs = btrs.Where(btr => btr.Name != BlockTableRecord.ModelSpace 
+                    && btr.Name != BlockTableRecord.PaperSpace);
+                foreach (var btr in qbtrs)
+                {
+                    var name = btr.Name;
+                    var ids = ACOL.GetEntities(btr); // entities defined in block template
+                    var ents = acDB.GetDBOjects(ids).ToList();
+                }
             }
         }
     }

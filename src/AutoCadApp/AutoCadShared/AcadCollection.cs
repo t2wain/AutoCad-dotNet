@@ -48,29 +48,28 @@ namespace AutoCadShared
         /// Get all BlockTableRecord
         /// </summary>
         public static ObjectIdCollection GetBlockTableRecords(BlockTable bt) =>
-            bt.Cast<ObjectId>().Aggregate(new ObjectIdCollection(), (col, id) => 
-            { 
-                col.Add(id);
-                return col;
-            });
+            GetObjectIds(bt.Cast<ObjectId>());
 
         /// <summary>
         /// Get all entities of a BlockTableRecord
         /// </summary>
         public static ObjectIdCollection GetEntities(BlockTableRecord btr) =>
-            btr.Cast<ObjectId>().Aggregate(new ObjectIdCollection(), (col, id) =>
-            {
-                col.Add(id);
-                return col;
-            });
+            GetObjectIds(btr.Cast<ObjectId>());
 
         /// <summary>
         /// Get all LayerTableRecord
         /// </summary>
-        public static ObjectIdCollection GetLayerTableRecord(LayerTable ltr) => 
-            ltr.Cast<ObjectId>().Aggregate(new ObjectIdCollection(), (col, id) =>
+        public static ObjectIdCollection GetLayerTableRecord(LayerTable ltr) =>
+            GetObjectIds(ltr.Cast<ObjectId>());
+
+        public static ObjectIdCollection GetObjectIds(IEnumerable<ObjectId> objIds) =>
+            GetObjectIds(objIds, new ObjectIdCollection());
+
+        public static ObjectIdCollection GetObjectIds(IEnumerable<ObjectId> objIds, ObjectIdCollection colId) =>
+            objIds.Aggregate(colId, (col, id) =>
             {
-                col.Add(id);
+                if (!col.Contains(id))
+                    col.Add(id);
                 return col;
             });
     }

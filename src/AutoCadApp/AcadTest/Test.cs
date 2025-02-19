@@ -2,6 +2,7 @@
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.ApplicationServices.Core;
 using Autodesk.AutoCAD.DatabaseServices;
+using PlotRaceway;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -21,6 +22,12 @@ namespace AcadTest
                     break;
                 case 2:
                     AcadRead.ReadObjectCollection(ActiveDocument);
+                    break;
+                case 3:
+                    RWRead.Read(ActiveDocument);
+                    break;
+                case 4:
+                    RWRead.Read2(ActiveDocument);
                     break;
                 default:
                     Read(ActiveDocument);

@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AutoCadShared\AutoCadShared.csproj" />
+    <ProjectReference Include="..\PlotRaceway\PlotRaceway.csproj" />
   </ItemGroup>
 
   <ItemGroup>

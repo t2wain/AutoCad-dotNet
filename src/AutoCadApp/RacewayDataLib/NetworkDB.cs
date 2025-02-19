@@ -55,6 +55,9 @@ namespace RacewayDataLib
         public static IEnumerable<Node> GetEquipNodes(this IEnumerable<Node> nodes) =>
             nodes.Where(n => n.NodeType == "EQUIPMENT").ToList();
 
+        public static IEnumerable<Node> GetEquipNodes(this IEnumerable<Cable> cables, IEnumerable<Node> nodeLookup) =>
+            nodeLookup.GetNodes(cables.GetNodeIds());
+
         public static IEnumerable<Node> GetNodes(this IEnumerable<Raceway> raceways)
         {
             var lstNodes = raceways.SelectMany<Raceway, Node>(r => new Node[] { r.FromNode, r.ToNode });
@@ -66,10 +69,10 @@ namespace RacewayDataLib
             }).Values;
         }
 
-        public static IEnumerable<int> GetNodeIds(this IEnumerable<Cable> cables) =>
+        static IEnumerable<int> GetNodeIds(this IEnumerable<Cable> cables) =>
             cables.SelectMany<Cable, int>(c => new int[] { c.FromNodeID, c.ToNodeID }).Distinct();
 
-        public static IEnumerable<Node> GetNodes(this IEnumerable<Node> nodeLookup, IEnumerable<int> nodeIds) =>
+        static IEnumerable<Node> GetNodes(this IEnumerable<Node> nodeLookup, IEnumerable<int> nodeIds) =>
             nodeLookup.Join(nodeIds, n => n.ID, id => id, (n, id) => n).ToList();
 
         #endregion

@@ -60,7 +60,8 @@ namespace TestProject
         {
             var lstNode = NetworkDB.ReadNodes(_ctx.FileConfig.NodeFile);
             var lstCable = NetworkDB.ReadCables(_ctx.FileConfig.CableFile);
-            Assert.True(lstNode.Count() > 0);
+            var lstEquipNode = lstCable.GetEquipNodes(lstNode);
+            Assert.True(lstEquipNode.Count() > 0);
         }
 
     }
