@@ -17,3 +17,9 @@ The AutoCAD .NET API DLL files can be located at \<drive>:\Program Files\Autodes
 .NET library intended for use with **AutoCAD Core Console** should not reference any AutoCAD .NET DLL files that access AutoCAD UI such as:
 - AcMgd.dll
 - MFC and WPF dialog boxes and UI are not accessible
+
+## Plotting Raceway Network with AutoCAD
+
+The AutoCAD drawing template "*Raceway.dwg*" has pre-defined Block Definition for raceway and node on various layers. Each raceway and node is plotted as a Block Reference with Tag and ID attributes. The layer can be toggle to display and hide raceway, node, and text entities to reduce clutter.
+
+![Raceway Network](./RacewayNetwork3D.png)s

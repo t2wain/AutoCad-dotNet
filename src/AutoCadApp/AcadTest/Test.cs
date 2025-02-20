@@ -15,7 +15,7 @@ namespace AcadTest
         {
             // During debug, change this value
             // at break point to run other test
-            var testNo = 0;
+            var testNo = 5;
             switch (testNo)
             {
                 case 1:
@@ -98,7 +98,7 @@ namespace AcadTest
         {
             var config = new DataConfig();
             var repo = NetworkDB.LoadData(config);
-            var lstRw = repo.Raceways.Where(rw => rw.Systems.Contains(4)).ToList();
+            var lstRw = repo.Raceways.Where(rw => rw.Systems.Contains(6)).ToList();
             RWWrite.WriteNetwork(doc, lstRw);
         }
     }

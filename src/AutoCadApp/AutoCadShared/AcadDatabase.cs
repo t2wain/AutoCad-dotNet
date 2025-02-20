@@ -123,11 +123,12 @@ namespace AutoCadShared
 
         #region Add to Dabase
 
-        public void AddEntity(BlockTableRecord btr, Entity ent)
+        public ObjectId AddEntity(BlockTableRecord btr, Entity ent)
         {
 
-            btr.AppendEntity(ent);
+            var id = btr.AppendEntity(ent);
             AcadTran.AddNewlyCreatedDBObject(ent, true);
+            return id;
         }
 
         public void AddEntityToModelSpace(Entity ent) => 

@@ -13,12 +13,20 @@ namespace PlotRaceway
     {
         #region Node block
 
-        static IEnumerable<BlockReference> BuildNodeBlock(AcadDatabase acDB, IEnumerable<Node> nodes, 
+        /// <summary>
+        /// Create node block references
+        /// </summary>
+        /// <param name="attachBTR">Attached entity to model_space BloctTableRecord</param>
+        static IEnumerable<ObjectId> BuildNodeBlock(AcadDatabase acDB, IEnumerable<Node> nodes, 
             BlockTable bt, BlockEnum blockName, LayerEnum layerName, BlockTableRecord attachBTR) =>
             nodes.Where(n => bt.Has(blockName.ToString()))
                 .Select(n => BuildNodeBlock(acDB, n, bt, blockName, layerName, attachBTR));
-        
-        static BlockReference BuildNodeBlock(AcadDatabase acDB, Node node, 
+
+        /// <summary>
+        /// Create node block references
+        /// </summary>
+        /// <param name="attachBTR">Attached entity to model_space BloctTableRecord</param>
+        static ObjectId BuildNodeBlock(AcadDatabase acDB, Node node, 
             BlockTable bt, BlockEnum blockName, LayerEnum layerName, BlockTableRecord attachBTR)
         {
 
@@ -28,44 +36,75 @@ namespace PlotRaceway
 
             // create a new instance of a block based
             // on the block table record
-            var bref = new BlockReference(new Point3d(node.X, node.Y, node.Z), btrId);
-            bref.Layer = layerName.ToString();
-            acDB.AddEntity(attachBTR, bref);
-            UpdateAttr(acDB, bref, (node.Tag, node.ID));
-            return bref;
+            using (var bref = new BlockReference(new Point3d(0, 0, 0), btrId))
+            {
+                bref.Layer = layerName.ToString();
+                var blkId = acDB.AddEntity(attachBTR, bref);
+                var transforms = new AcadWrite.EntityTransforms
+                {
+                    Scale = Matrix3d.Scaling(0.2, bref.Position),
+                    Displacement = Matrix3d.Displacement(new Point3d(node.X, node.Y, node.Z).GetAsVector())
+                };
+                AcadWrite.ApplyTransform(bref, transforms);
+
+                // move the attributes to the node position
+                transforms.Scale = Matrix3d.Identity;
+                var lstAttIds = AddAttributes(acDB, bref, (node.Tag, node.ID), transforms);
+                return blkId;
+            }
         }
 
         #endregion
 
         #region Raceway block
 
-        static IEnumerable<BlockReference> BuildRacewayBlock(AcadDatabase acDB, IEnumerable<Raceway> raceways, 
+        /// <summary>
+        /// Create raceway block references
+        /// </summary>
+        /// <param name="attachBTR">Attached entity to model_space BloctTableRecord</param>
+        static IEnumerable<ObjectId> BuildRacewayBlock(AcadDatabase acDB, IEnumerable<Raceway> raceways, 
             BlockTable bt, BlockEnum blockName, LayerEnum layerName, BlockTableRecord attachBTR) =>
             raceways.Where(r => bt.Has(blockName.ToString()))
                 .Select(r => BuildRacewayBlock(acDB, r, bt, blockName, layerName, attachBTR));
 
-        static BlockReference BuildRacewayBlock(AcadDatabase acDB, Raceway raceway, 
+        /// <summary>
+        /// Create raceway block reference
+        /// </summary>
+        /// <param name="attachBTR">Attached entity to model_space BloctTableRecord</param>
+        static ObjectId BuildRacewayBlock(AcadDatabase acDB, Raceway raceway, 
             BlockTable bt, BlockEnum blockName, LayerEnum layerName, BlockTableRecord attachBTR)
         {
-            // each block reference is a block table record
-            // contains the entities defined for the block reference
+            // each block definition is a block table record
+            // contains the entities defined for the block definition
             var btrId = bt[blockName.ToString()];
 
-            // create a new instance of a block based
-            // on the block table record
-            var bref = new BlockReference(new Point3d(0, 0, 0), btrId);
-            bref.Layer = layerName.ToString();
-            ApplyTransform(bref, raceway);
-            acDB.AddEntity(attachBTR, bref);
-            UpdateAttr(acDB, bref, (raceway.Tag, raceway.ID));
-            return bref;
+            // create a new instance of a block reference based
+            // on block definition
+            using (var bref = new BlockReference(new Point3d(0, 0, 0), btrId))
+            {
+                bref.Layer = layerName.ToString();
+                var blkId = acDB.AddEntity(attachBTR, bref);
+                var trans = GetTransform(raceway);
+                AcadWrite.ApplyTransform(bref, trans);
+
+                // create attributes for the block reference
+                // move the attributes to the raceway position
+                trans.Scale = Matrix3d.Identity;
+                var lstAttIds = AddAttributes(acDB, bref, (raceway.Tag, raceway.ID), trans);
+                return blkId;
+            }
         }
         
-        static IEnumerable<BlockReference> BuildRaceway(this IEnumerable<Raceway> raceway, 
+        /// <summary>
+        /// Plot the raceway network on certain layers
+        /// based on existing block definitions
+        /// </summary>
+        static IEnumerable<ObjectId> BuildRaceway(this IEnumerable<Raceway> raceway, 
             AcadDatabase acDB, BlockTable bt, BlockTableRecord attachBTR)
         {
-            IEnumerable<BlockReference> lstBlk = Array.Empty<BlockReference>();
+            IEnumerable<ObjectId> lstBlk = Array.Empty<ObjectId>();
 
+            // create tray and raceway node block on certain layers
             if (raceway.GetTray() is IEnumerable<Raceway> trays && trays.Count() > 0)
             {
                 var rwNodes = trays.GetNodes();
@@ -74,12 +113,14 @@ namespace PlotRaceway
                 lstBlk = lstBlk.Concat(blkRwNodes).Concat(blkRw);
             }
 
+            // create jump block on certain layers
             if (raceway.GetJump() is IEnumerable<Raceway> jumps && jumps.Count() > 0)
             {
                 var blkJump = BuildRacewayBlock(acDB, jumps, bt, BlockEnum.Drop, LayerEnum.Drop, attachBTR);
                 lstBlk = lstBlk.Concat(blkJump);
             }
 
+            // create drop block and equip node block on certain layers
             if (raceway.GetDrop() is IEnumerable<Raceway> drops && drops.Count() > 0)
             {
                 var rwEqNodes = drops.GetNodes().GetEquipNodes();
@@ -95,60 +136,59 @@ namespace PlotRaceway
 
         #region Common
 
-        static void UpdateAttr(AcadDatabase acDB, BlockReference bref, (string Tag, int ID) data)
+        /// <summary>
+        /// Add attributes to new block reference
+        /// based on its block definition
+        /// </summary>
+        static IEnumerable<ObjectId>AddAttributes(AcadDatabase acDB, 
+            BlockReference bref, (string Tag, int ID) data, AcadWrite.EntityTransforms transforms)
         {
-            foreach (var attr in bref.AttributeCollection.Cast<ObjectId>())
+            var lstAtt = AcadWrite.AddAttributes(acDB, bref);
+            var lstIds = new List<ObjectId>();
+            foreach (var att in lstAtt)
             {
-                var attRef = acDB.GetObject<AttributeReference>(attr, OpenMode.ForWrite);
-                UpdateAttr(attRef, data.Tag, data.ID);
+                switch (att.Tag)
+                {
+                    case "NAME":
+                        att.TextString = data.Tag;
+                        break;
+                    case "ID":
+                        att.TextString = data.ID.ToString();
+                        break;
+                }
+                att.FieldLength = att.TextString.Length;
+                AcadWrite.ApplyTransform(att, transforms);
+                lstIds.Add(att.ObjectId);
+                att.Dispose();
             }
+            return lstIds;
         }
 
-        static void UpdateAttr(AttributeReference attRef, string tag, int id)
+        /// <summary>
+        /// Get block transform based on raceway data
+        /// </summary>
+        static AcadWrite.EntityTransforms GetTransform(Raceway raceway)
         {
-            switch (attRef.Tag)
-            {
-                case "NAME":
-                    attRef.TextString = tag;
-                    break;
-                case "ID":
-                    attRef.TextString = id.ToString();
-                    break;
-            }
-        }
+            // position of default raceway block
+            var p0 = new Point3d(0, 0, 0); // insertion point at origin
+            var vb = new Vector3d(1, 0, 0); // unit lenth of 1 in x-axis
 
-        static void ApplyTransform(Entity ent, Raceway raceway)
-        {
-            var p0 = new Point3d(0, 0, 0);
-            var vb = new Vector3d(1, 0, 0);
-
+            // calculate vector of raceway
             var fn = raceway.FromNode;
             var tn = raceway.ToNode;
             var pf = new Point3d(new double[] { fn.X, fn.Y, fn.Z });
             var pt = new Point3d(new double[] { tn.X, tn.Y, tn.Z });
-            var vr = pt - pf;
+            var vr = pt - pf; // raceway vector
 
-            var axis = vb.CrossProduct(vr);
-            var angle = vb.GetAngleTo(vr);
-
-            ent.TransformBy(Matrix3d.Rotation(angle, axis, p0));
-            ent.TransformBy(Matrix3d.Scaling(vr.Length, new Point3d(0, 0, 0)));
-            ent.TransformBy(Matrix3d.Displacement(pf - p0));
+            return AcadWrite.GetTransforms(p0, vb, pf, vr);
         }
 
-        static void SaveData(AcadDatabase acDB, IEnumerable<Entity> lstEntity)
+        public static void ExecuteQuery(AcadDatabase acDB, IEnumerable<ObjectId> qEntities)
         {
-            // model space block table record
-            //var ms = acDB.GetModelSpaceBlockTableRecord(OpenMode.ForWrite);
             try
             {
-                foreach (var ent in lstEntity)
-                {
-                    // attach block instance to model space
-                    //ms.AppendEntity(ent);
-                    //acDB.AcadTran.AddNewlyCreatedDBObject(ent, true);
-                    ent.Dispose();
-                }
+                // execute LINQ query
+                var lstIds = qEntities.ToList();
                 acDB.AcadTran.Commit();
             }
             catch
@@ -168,9 +208,10 @@ namespace PlotRaceway
             {
                 var bt = acDB.GetBlockTable();
                 var ms = acDB.GetModelSpaceBlockTableRecord(OpenMode.ForWrite);
-                var lstBlk = raceways.BuildRaceway(acDB, bt, ms);
-                SaveData(acDB, lstBlk);
+                var qEntities = raceways.BuildRaceway(acDB, bt, ms);
+                ExecuteQuery(acDB, qEntities);
             }
+            AcadZoom.ZoomExtents(doc);
         }
     }
    
