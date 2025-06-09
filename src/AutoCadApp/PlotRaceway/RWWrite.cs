@@ -30,20 +30,20 @@ namespace PlotRaceway
             BlockTable bt, BlockEnum blockName, LayerEnum layerName, BlockTableRecord attachBTR)
         {
 
-            // each block reference is a block table record
-            // contains the entities defined for the block reference
+            // each block definition is a block table record
+            // contains the entities defined for the block definition
             var btrId = bt[blockName.ToString()];
 
-            // create a new instance of a block based
-            // on the block table record
+            // create a new block reference of a block based
+            // on the block definition which a block table record
             using (var bref = new BlockReference(new Point3d(0, 0, 0), btrId))
             {
                 bref.Layer = layerName.ToString();
                 var blkId = acDB.AddEntity(attachBTR, bref);
                 var transforms = new AcadWrite.EntityTransforms
                 {
-                    Scale = Matrix3d.Scaling(0.2, bref.Position),
-                    Displacement = Matrix3d.Displacement(new Point3d(node.X, node.Y, node.Z).GetAsVector())
+                    Scale = Matrix3d.Scaling(0.2, bref.Position), // make the circle smaller
+                    Displacement = Matrix3d.Displacement(new Point3d(node.X, node.Y, node.Z).GetAsVector()) // move circle into position
                 };
                 AcadWrite.ApplyTransform(bref, transforms);
 
@@ -78,14 +78,14 @@ namespace PlotRaceway
             // contains the entities defined for the block definition
             var btrId = bt[blockName.ToString()];
 
-            // create a new instance of a block reference based
-            // on block definition
+            // create a new block reference of a block based
+            // on the block definition which a block table record
             using (var bref = new BlockReference(new Point3d(0, 0, 0), btrId))
             {
                 bref.Layer = layerName.ToString();
                 var blkId = acDB.AddEntity(attachBTR, bref);
                 var trans = GetTransform(raceway);
-                AcadWrite.ApplyTransform(bref, trans);
+                AcadWrite.ApplyTransform(bref, trans); // rotate, scale, move the raceway into position
 
                 // create attributes for the block reference
                 // move the attributes to the raceway position
@@ -102,13 +102,16 @@ namespace PlotRaceway
         static IEnumerable<ObjectId> BuildRaceway(this IEnumerable<Raceway> raceway, 
             AcadDatabase acDB, BlockTable bt, BlockTableRecord attachBTR)
         {
+            // collect all new entity ID
             IEnumerable<ObjectId> lstBlk = Array.Empty<ObjectId>();
 
             // create tray and raceway node block on certain layers
             if (raceway.GetTray() is IEnumerable<Raceway> trays && trays.Count() > 0)
             {
+                // build node
                 var rwNodes = trays.GetNodes();
                 var blkRwNodes = BuildNodeBlock(acDB, rwNodes, bt, BlockEnum.RwNode, LayerEnum.RwNode, attachBTR);
+                // build raceway
                 var blkRw = BuildRacewayBlock(acDB, trays, bt, BlockEnum.Raceway, LayerEnum.Raceway, attachBTR);
                 lstBlk = lstBlk.Concat(blkRwNodes).Concat(blkRw);
             }
@@ -116,6 +119,7 @@ namespace PlotRaceway
             // create jump block on certain layers
             if (raceway.GetJump() is IEnumerable<Raceway> jumps && jumps.Count() > 0)
             {
+                // build raceway
                 var blkJump = BuildRacewayBlock(acDB, jumps, bt, BlockEnum.Drop, LayerEnum.Drop, attachBTR);
                 lstBlk = lstBlk.Concat(blkJump);
             }
@@ -123,8 +127,10 @@ namespace PlotRaceway
             // create drop block and equip node block on certain layers
             if (raceway.GetDrop() is IEnumerable<Raceway> drops && drops.Count() > 0)
             {
+                // build node
                 var rwEqNodes = drops.GetNodes().GetEquipNodes();
                 var blkEqNodes = BuildNodeBlock(acDB, rwEqNodes, bt, BlockEnum.EquipNode, LayerEnum.EquipNode, attachBTR);
+                // build raceway
                 var blkDrop = BuildRacewayBlock(acDB, drops, bt, BlockEnum.Drop, LayerEnum.Drop, attachBTR);
                 lstBlk = lstBlk.Concat(blkEqNodes).Concat(blkDrop);
             }
@@ -183,7 +189,7 @@ namespace PlotRaceway
             return AcadWrite.GetTransforms(p0, vb, pf, vr);
         }
 
-        public static void ExecuteQuery(AcadDatabase acDB, IEnumerable<ObjectId> qEntities)
+        static void ExecuteQuery(AcadDatabase acDB, IEnumerable<ObjectId> qEntities)
         {
             try
             {

@@ -58,7 +58,7 @@ namespace AutoCadShared
         /// Create a block reference based on exsiting block definition.
         /// Each block definition is a block table record
         /// </summary>
-        public static BlockReference CreateBlockReference(AcadDatabase acDB, BlockTable bt, string blkName)
+        public static BlockReference CreateBlockReference(BlockTable bt, string blkName)
         {
             // existing block definition is defined as block table record
             var btrId = bt[blkName];
