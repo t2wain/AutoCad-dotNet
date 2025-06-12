@@ -11,10 +11,10 @@
 
   <ItemGroup>
     <Reference Include="accoremgd">
-      <HintPath>..\..\..\..\..\Program Files\Autodesk\AutoCAD 2022\accoremgd.dll</HintPath>
+      <HintPath>C:\Program Files\Autodesk\AutoCAD 2024\accoremgd.dll</HintPath>
     </Reference>
     <Reference Include="Acdbmgd">
-      <HintPath>..\..\..\..\..\Program Files\Autodesk\AutoCAD 2022\acdbmgd.dll</HintPath>
+      <HintPath>C:\Program Files\Autodesk\AutoCAD 2024\acdbmgd.dll</HintPath>
     </Reference>
   </ItemGroup>
 

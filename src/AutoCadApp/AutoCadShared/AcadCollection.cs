@@ -56,6 +56,13 @@ namespace AutoCadShared
         public static ObjectIdCollection GetEntities(BlockTableRecord btr) =>
             GetObjectIds(btr.Cast<ObjectId>());
 
+        public static ObjectIdCollection GetAllBlocks(AcadDatabase acDB)
+        {
+            var msColId = GetEntities(acDB.GetModelSpaceBlockTableRecord());
+            var psColId = GetEntities(acDB.GetPaperSpaceBlockTableRecord());
+            return GetObjectIds(psColId.Cast<ObjectId>(), msColId);
+        }
+
         /// <summary>
         /// Get all LayerTableRecord
         /// </summary>

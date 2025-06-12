@@ -1,0 +1,5 @@
+﻿;Loading the .Net module
+(command "NETLOAD" "C:\\devgit\\LearnAcad\\src\\AutoCadApp\\AutoCadLib\\bin\\Debug\\net48\\AutoCadLib.dll")
+
+; Run MTO scan for the active document.
+(command "RUNTEST")

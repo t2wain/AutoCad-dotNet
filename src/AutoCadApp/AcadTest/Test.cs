@@ -1,21 +1,26 @@
-﻿using AutoCadShared;
+﻿using AcadCommon;
+using AcadCommon.DTO;
+using AutoCadShared;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.ApplicationServices.Core;
 using Autodesk.AutoCAD.DatabaseServices;
 using PlotRaceway;
 using RacewayDataLib;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace AcadTest
 {
     public static class Test
     {
-        public static void Run()
+        public static void Run(AcadRunConfig config)
         {
             // During debug, change this value
             // at break point to run other test
-            var testNo = 5;
+            var testNo = config.RunCommand;
             switch (testNo)
             {
                 case 1:
@@ -32,6 +37,9 @@ namespace AcadTest
                     break;
                 case 5:
                     PlotRW(ActiveDocument);
+                    break;
+                case 6:
+                    ReadBlockInFile(config);
                     break;
                 default:
                     Read(ActiveDocument);
@@ -50,7 +58,7 @@ namespace AcadTest
         {
             var lst = AcadRead.LoadPolyLines(doc);
             lst = AcadRead.LoadLines(doc);
-            lst = AcadRead.LoadBlocks(doc);
+            lst = (dynamic)AcadRead.LoadBlocks(doc);
             lst = AcadRead.LoadMText(doc);
         }
 
@@ -100,6 +108,26 @@ namespace AcadTest
             var repo = NetworkDB.LoadData(config);
             var lstRw = repo.Raceways.Where(rw => rw.Systems.Contains(6)).ToList();
             RWWrite.WriteNetwork(doc, lstRw);
+        }
+
+        public static void ReadBlockInFile(AcadRunConfig config)
+        {
+            if (!File.Exists(config.DwgFileListPath))
+                return;
+
+            var lstFileName = File.ReadLines(config.DwgFileListPath)
+                .Where(f => File.Exists(f));
+            var regEx = new Regex("mto_*", RegexOptions.IgnoreCase);
+            foreach (var filePath in lstFileName)
+            {
+                var dwg = AcadRead.ReadAllBlocks(filePath, regEx);
+                if (Directory.Exists(config.AcadExportFolderPath))
+                {
+                    var xml = BlockData.SerializeToXml(dwg);
+                    var xf = Path.Combine(config.AcadExportFolderPath, $"{dwg.FileName}.xml");
+                    FileUtil.SaveXml(xml, xf);
+                }
+            }
         }
     }
 }

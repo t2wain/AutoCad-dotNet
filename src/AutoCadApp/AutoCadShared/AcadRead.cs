@@ -3,7 +3,10 @@ using Autodesk.AutoCAD.DatabaseServices;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using ACOL = AutoCadShared.AcadCollection;
+using AcadCommon.DTO;
+using System.IO;
 
 
 namespace AutoCadShared
@@ -14,12 +17,12 @@ namespace AutoCadShared
     public static class AcadRead
     {
 
-        #region Read Entity
+        #region Read blocks with document
 
         /// <summary>
         /// Read data from all blocks in the drawing
         /// </summary>
-        public static List<dynamic> LoadBlocks(Document doc)
+        public static List<BlockDTO> LoadBlocks(Document doc)
         {
             using (var acDoc = new AcadDocument(doc))
             {
@@ -31,13 +34,13 @@ namespace AutoCadShared
         /// <summary>
         /// Read data from blocks in the drawing filtered by block name
         /// </summary>
-        public static List<dynamic> LoadBlocks(Document doc, string blockName) =>
+        public static List<BlockDTO> LoadBlocks(Document doc, string blockName) =>
             LoadBlocks(doc, new[] { blockName });
 
         /// <summary>
         /// Read data from blocks in the drawing filtered by block names
         /// </summary>
-        public static List<dynamic> LoadBlocks(Document doc, string[] blockNames)
+        public static List<BlockDTO> LoadBlocks(Document doc, string[] blockNames)
         {
             using (var acDoc = new AcadDocument(doc))
             {
@@ -50,25 +53,12 @@ namespace AutoCadShared
         /// <summary>
         /// Read data from a list of blocks
         /// </summary>
-        public static List<dynamic> ReadBlocks(this IEnumerable<BlockReference> blocks, AcadDocument acDoc) =>
-            blocks
-                .Select(bl => (dynamic)new
-                {
-                    bl.Id,
-                    bl.BlockId,
-                    bl.BlockName,
-                    bl.BlockTableRecord,
-                    PosX = bl.Position.X,
-                    PosY = bl.Position.Y,
-                    PosZ = bl.Position.Z,
-                    bl.Name,
-                    bl.Layer,
-                    bl.Rotation,
-                    Attrs = acDoc.GetBlockAttributes(bl)
-                        .Select(attref => new { attref.Tag, attref.TextString })
-                        .ToList()
-                })
-                .ToList();
+        public static List<BlockDTO> ReadBlocks(this IEnumerable<BlockReference> blocks, AcadDocument acDoc) =>
+            ReadBlocks(blocks, acDoc.GetDatabase());
+
+        #endregion
+
+        #region Read Entities
 
         /// <summary>
         /// Read data from all polylines in the drawing
@@ -150,6 +140,8 @@ namespace AutoCadShared
 
         #endregion
 
+        #region Read All
+
         /// <summary>
         /// Explore the standard collection of objects in the drawing
         /// </summary>
@@ -158,51 +150,132 @@ namespace AutoCadShared
             using (var acDoc = new AcadDocument(doc))
             using (var acDB = acDoc.GetDatabase())
             {
-                var lt = acDB.GetObject<LayerTable>(ACOL.GetLayerTable(doc.Database));
-                var ltrs = acDB.GetDBOjects(ACOL.GetLayerTableRecord(lt)).Cast<LayerTableRecord>().ToList();
-                var names = ltrs.Select(l => l.Name).ToList();
-
-                var bt = acDB.GetObject<BlockTable>(ACOL.GetBlockTable(doc.Database));
-                var btrs = acDB.GetDBOjects(ACOL.GetBlockTableRecords(bt)).Cast<BlockTableRecord>().ToList();
-                names = btrs.Select(b => b.Name).ToList();
-
-                // Model Space
-                var btrMS = btrs.Where(btr => btr.Name.Equals(BlockTableRecord.ModelSpace, StringComparison.OrdinalIgnoreCase)).First();
-                var msCnt = ACOL.GetEntities(btrMS).Count; // entity count
-
-                // Paper Space
-                var btrPS = btrs.Where(btr => btr.Name.Equals(BlockTableRecord.PaperSpace, StringComparison.OrdinalIgnoreCase)).First();
-                var psCnt = ACOL.GetEntities(btrPS).Count; // entity count
-
-                // Block templates
-                var qbtrs = btrs.Where(btr => !btr.Name.Equals(BlockTableRecord.ModelSpace, StringComparison.OrdinalIgnoreCase)
-                    && !btr.Name.Equals(BlockTableRecord.PaperSpace, StringComparison.OrdinalIgnoreCase)).ToList();
-                foreach (var btr in qbtrs)
-                {
-                    var data = new
-                    {
-                        btr.Name,
-                        btr.Explodable,
-                        btr.HasAttributeDefinitions,
-                        btr.HasPreviewIcon,
-                        btr.IsAnonymous,
-                        btr.IsDynamicBlock,
-                        btr.IsFromExternalReference,
-                        btr.IsFromOverlayReference,
-                        btr.IsLayout,
-                        btr.Origin,
-                        btr.PathName,
-                        btr.XrefStatus,
-                        AnonymousBlockIds = btr.GetAnonymousBlockIds().Count,
-                        BlockReferenceIds = btr.GetBlockReferenceIds(false,false).Count,
-                        ErasedBlockReferenceIds = btr.GetErasedBlockReferenceIds().Count,
-                    };
-                    
-                    var ids = ACOL.GetEntities(btr); // entities defined in block template
-                    var ents = acDB.GetDBOjects(ids).ToList();
-                }
+                ReadObjectCollection(acDB);
             }
         }
+
+        /// <summary>
+        /// Explore the standard collection of objects in the drawing
+        /// </summary>
+        public static void ReadObjectCollection(AcadDatabase acDB)
+        {
+            var lt = acDB.GetObject<LayerTable>(ACOL.GetLayerTable(acDB.AcadDB));
+            var ltrs = acDB.GetDBOjects(ACOL.GetLayerTableRecord(lt)).Cast<LayerTableRecord>().ToList();
+            var names = ltrs.Select(l => l.Name).ToList();
+
+            var bt = acDB.GetObject<BlockTable>(ACOL.GetBlockTable(acDB.AcadDB));
+            var btrs = acDB.GetDBOjects(ACOL.GetBlockTableRecords(bt)).Cast<BlockTableRecord>().ToList();
+            names = btrs.Select(b => b.Name).ToList();
+
+            // Model Space
+            var btrMS = btrs.Where(btr => btr.Name.Equals(BlockTableRecord.ModelSpace, StringComparison.OrdinalIgnoreCase)).First();
+            var msCnt = ACOL.GetEntities(btrMS).Count; // entity count
+
+            // Paper Space
+            var btrPS = btrs.Where(btr => btr.Name.Equals(BlockTableRecord.PaperSpace, StringComparison.OrdinalIgnoreCase)).First();
+            var psCnt = ACOL.GetEntities(btrPS).Count; // entity count
+
+            // Block templates
+            var qbtrs = btrs.Where(btr => !btr.Name.Equals(BlockTableRecord.ModelSpace, StringComparison.OrdinalIgnoreCase)
+                && !btr.Name.Equals(BlockTableRecord.PaperSpace, StringComparison.OrdinalIgnoreCase)).ToList();
+            foreach (var btr in qbtrs)
+            {
+                var data = new
+                {
+                    btr.Name,
+                    btr.Explodable,
+                    btr.HasAttributeDefinitions,
+                    btr.HasPreviewIcon,
+                    btr.IsAnonymous,
+                    btr.IsDynamicBlock,
+                    btr.IsFromExternalReference,
+                    btr.IsFromOverlayReference,
+                    btr.IsLayout,
+                    btr.Origin,
+                    btr.PathName,
+                    btr.XrefStatus,
+                    AnonymousBlockIds = btr.GetAnonymousBlockIds().Count,
+                    BlockReferenceIds = btr.GetBlockReferenceIds(false,false).Count,
+                    ErasedBlockReferenceIds = btr.GetErasedBlockReferenceIds().Count,
+                };
+                    
+                var ids = ACOL.GetEntities(btr); // entities defined in block template
+                var ents = acDB.GetDBOjects(ids).ToList();
+            }
+        }
+
+        #endregion
+
+        #region Read blocks with database
+
+        public static DrawingDTO ReadAllBlocks(string filePath, Regex nameFilter = null)
+        {
+            try
+            {
+                using (var acDB = new AcadDatabase(filePath))
+                {
+                        var blks = GetAllBlocks(acDB);
+                        if (nameFilter != null)
+                            blks = blks
+                                .Where(blk => nameFilter.IsMatch(blk.Name))
+                                .ToList();
+                        var blkData = ReadBlocks(blks, acDB);
+                        return new DrawingDTO
+                        {
+                            FileName = new FileInfo(filePath).Name.Replace(".dwg", ""),
+                            FilePath = filePath,
+                            MTOBlocks = blkData.ToArray()
+                        };
+                    }
+                }
+            catch (Exception ex) 
+            {
+                return CreateDrawingError(ex, filePath);
+            }
+        }
+
+        public static DrawingDTO CreateDrawingError(Exception ex, string filePath) =>
+            new DrawingDTO
+            {
+                FilePath = filePath,
+                FileName = new FileInfo(filePath).Name.Replace(".dwg", ""),
+                IsScanError = true,
+                ErrorMessage = ex.Message,
+            };
+
+        public static IEnumerable<BlockReference> GetAllBlocks(AcadDatabase acDB)
+        {
+            var colId = ACOL.GetAllBlocks(acDB).Cast<ObjectId>();
+            var colEnt = acDB.GetEntities<BlockReference>(colId).ToList();
+            return colEnt
+                .Where(bl => !bl.Name.Contains("*"))
+                .ToList();
+        }
+
+        /// <summary>
+        /// Read data from a list of blocks
+        /// </summary>
+        public static List<BlockDTO> ReadBlocks(this IEnumerable<BlockReference> blocks, AcadDatabase acDB) =>
+            blocks
+                .Select(bl => new BlockDTO
+                {
+                    Id = bl.Id.ToString(),
+                    BlockId = bl.BlockId.ToString(),
+                    BlockName = bl.BlockName,
+                    BlockTableRecord = bl.BlockTableRecord.ToString(),
+                    PositionX = bl.Position.X,
+                    PositionY = bl.Position.Y,
+                    PositionZ = bl.Position.Z,
+                    Name = bl.Name.ToString(),
+                    Layer = bl.Layer,
+                    Rotation = bl.Rotation,
+                    Attrs = acDB.GetEntities<AttributeReference>(bl.AttributeCollection.Cast<ObjectId>())
+                        .Select(attref => new BlockAttrDTO { Tag = attref.Tag, TextString = attref.TextString })
+                        .ToArray()
+                })
+                .ToList();
+
+        #endregion
     }
 }
 

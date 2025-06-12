@@ -10,12 +10,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\AcadCommon\AcadCommon.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="accoremgd">
-      <HintPath>C:\Program Files\Autodesk\AutoCAD 2022\accoremgd.dll</HintPath>
+      <HintPath>C:\Program Files\Autodesk\AutoCAD 2024\accoremgd.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Acdbmgd">
-      <HintPath>C:\Program Files\Autodesk\AutoCAD 2022\acdbmgd.dll</HintPath>
+      <HintPath>C:\Program Files\Autodesk\AutoCAD 2024\acdbmgd.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>

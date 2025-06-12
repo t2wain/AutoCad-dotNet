@@ -3,6 +3,7 @@ using Autodesk.AutoCAD.EditorInput;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ACOL = AutoCadShared.AcadCollection;
 
 namespace AutoCadShared
 {
@@ -16,6 +17,16 @@ namespace AutoCadShared
 
         Database _acDB;
         Transaction _acTran;
+        bool _disposeAll = false;
+
+        public AcadDatabase(string filePath,
+            FileOpenMode mode = FileOpenMode.OpenForReadAndReadShare)
+        {
+            _acDB = new Database(false, true);
+            _acDB.ReadDwgFile(filePath, mode, true, string.Empty);
+            _acTran = _acDB.TransactionManager.StartTransaction();
+            _disposeAll = true;
+        }
 
         public AcadDatabase(Database acDB, Transaction acTran)
         {
@@ -25,6 +36,11 @@ namespace AutoCadShared
 
         public void Dispose()
         {
+            if (_disposeAll)
+            {
+                this._acTran.Dispose();
+                this._acDB.Dispose();
+            }
             this._acDB = null;
             this._acTran = null;
         }
@@ -110,13 +126,12 @@ namespace AutoCadShared
 
         public IEnumerable<T> GetEntities<T>(IEnumerable<SelectedObject> selection,
             OpenMode mode = OpenMode.ForRead) where T : DBObject =>
-            selection
-                .Select(i => i.ObjectId)
-                .Select(id => GetObject<T>(id, mode));
+            GetEntities<T>(selection.Select(i => i.ObjectId), mode);
 
         public IEnumerable<T> GetEntities<T>(IEnumerable<ObjectId> objIds,
             OpenMode mode = OpenMode.ForRead) where T : DBObject =>
-            objIds.Select(id => GetObject<T>(id, mode));
+            objIds.Select(id => GetObject<T>(id, mode))
+                .Where(o => o != null).ToList();
 
 
         #endregion
