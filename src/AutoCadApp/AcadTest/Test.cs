@@ -1,12 +1,10 @@
 ﻿using AcadCommon;
-using AcadCommon.DTO;
 using AutoCadShared;
 using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.ApplicationServices.Core;
 using Autodesk.AutoCAD.DatabaseServices;
 using PlotRaceway;
 using RacewayDataLib;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -110,6 +108,10 @@ namespace AcadTest
             RWWrite.WriteNetwork(doc, lstRw);
         }
 
+        /// <summary>
+        /// Export BlockReference data from AutoCAD drawings as xml
+        /// to the working folder
+        /// </summary>
         public static void ReadBlockInFile(AcadRunConfig config)
         {
             if (!File.Exists(config.DwgFileListPath))

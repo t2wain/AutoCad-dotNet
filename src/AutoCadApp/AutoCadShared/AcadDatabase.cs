@@ -3,7 +3,6 @@ using Autodesk.AutoCAD.EditorInput;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using ACOL = AutoCadShared.AcadCollection;
 
 namespace AutoCadShared
 {
@@ -19,12 +18,18 @@ namespace AutoCadShared
         Transaction _acTran;
         bool _disposeAll = false;
 
+        /// <summary>
+        /// Open the drawing database without loading the
+        /// drawing to the editor
+        /// </summary>
         public AcadDatabase(string filePath,
             FileOpenMode mode = FileOpenMode.OpenForReadAndReadShare)
         {
             _acDB = new Database(false, true);
             _acDB.ReadDwgFile(filePath, mode, true, string.Empty);
             _acTran = _acDB.TransactionManager.StartTransaction();
+
+            // ensure the database and transaction will be dispose.
             _disposeAll = true;
         }
 

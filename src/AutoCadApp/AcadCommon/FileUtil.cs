@@ -24,7 +24,7 @@ namespace AcadCommon
             {
                 return Directory.GetFiles(exportFolderPath)
                     .Select(fi => new FileInfo(fi))
-                    .Where(fi => fi.Extension == ".xml")
+                    .Where(fi => fi.Extension == ".xml" | fi.Extension == ".txt")
                     .ToList();
             }
             return Enumerable.Empty<FileInfo>();

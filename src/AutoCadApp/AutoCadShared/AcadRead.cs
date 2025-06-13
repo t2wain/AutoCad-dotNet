@@ -208,32 +208,43 @@ namespace AutoCadShared
 
         #region Read blocks with database
 
+        /// <summary>
+        /// Scan the document for all BlockReference
+        /// </summary>
         public static DrawingDTO ReadAllBlocks(string filePath, Regex nameFilter = null)
         {
             try
             {
+                // open the drawing database without
+                // loading the drawing to the editor
                 using (var acDB = new AcadDatabase(filePath))
                 {
-                        var blks = GetAllBlocks(acDB);
-                        if (nameFilter != null)
-                            blks = blks
-                                .Where(blk => nameFilter.IsMatch(blk.Name))
-                                .ToList();
-                        var blkData = ReadBlocks(blks, acDB);
-                        return new DrawingDTO
-                        {
-                            FileName = new FileInfo(filePath).Name.Replace(".dwg", ""),
-                            FilePath = filePath,
-                            MTOBlocks = blkData.ToArray()
-                        };
-                    }
+                    // get all BlockReference
+                    var blks = GetAllBlocks(acDB);
+                    // filter blocks by name
+                    if (nameFilter != null)
+                        blks = blks
+                            .Where(blk => nameFilter.IsMatch(blk.Name))
+                            .ToList();
+                    // read block data
+                    var blkData = ReadBlocks(blks, acDB);
+                    return new DrawingDTO
+                    {
+                        FileName = new FileInfo(filePath).Name.Replace(".dwg", ""),
+                        FilePath = filePath,
+                        MTOBlocks = blkData.ToArray()
+                    };
                 }
+            }
             catch (Exception ex) 
             {
                 return CreateDrawingError(ex, filePath);
             }
         }
 
+        /// <summary>
+        /// Capture the error from scanning task
+        /// </summary>
         public static DrawingDTO CreateDrawingError(Exception ex, string filePath) =>
             new DrawingDTO
             {
@@ -243,12 +254,15 @@ namespace AutoCadShared
                 ErrorMessage = ex.Message,
             };
 
+        /// <summary>
+        /// Retrieve all the BlockReference from model and paper spaces
+        /// </summary>
         public static IEnumerable<BlockReference> GetAllBlocks(AcadDatabase acDB)
         {
             var colId = ACOL.GetAllBlocks(acDB).Cast<ObjectId>();
             var colEnt = acDB.GetEntities<BlockReference>(colId).ToList();
             return colEnt
-                .Where(bl => !bl.Name.Contains("*"))
+                .Where(bl => !bl.Name.Contains("*")) // exclude anonymous blocks
                 .ToList();
         }
 

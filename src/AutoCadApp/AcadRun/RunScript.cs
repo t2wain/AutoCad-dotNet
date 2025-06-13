@@ -4,6 +4,9 @@ using System;
 
 namespace AcadRun
 {
+    /// <summary>
+    /// Run accoreconsole.exe
+    /// </summary>
     public static class RunScript
     {
         public static string AppName = "accoreconsole.exe";
@@ -16,6 +19,9 @@ namespace AcadRun
             return arg ;
         }
 
+        /// <summary>
+        /// Run accoreconsole.exe in console mode
+        /// </summary>
         public static (int ExitCode, string Ouptput) RunScan(string cadFolderPath, string args, int timeOutMinute)
         {
             var exeName = Path.Combine(cadFolderPath, AppName);
@@ -23,7 +29,10 @@ namespace AcadRun
                 Convert.ToInt32(TimeSpan.FromMinutes(timeOutMinute).TotalMilliseconds));
         }
 
-        static (int ExitCode, string Ouptput) CaptureConsoleAppOutput(string exeName, string arguments, int timeoutMilliseconds)
+        /// <summary>
+        /// Launch an application in the console mode
+        /// </summary>
+        public static (int ExitCode, string Ouptput) CaptureConsoleAppOutput(string exeName, string arguments, int timeoutMilliseconds)
         {
             using (Process process = new Process())
             {

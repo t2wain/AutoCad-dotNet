@@ -7,6 +7,9 @@ using System.Reflection;
 
 namespace AutoCadLib
 {
+    /// <summary>
+    /// AutoCAD .NET command
+    /// </summary>
     public static class AcadCommands
     {
         [CommandMethod("RunTest")]
@@ -17,8 +20,12 @@ namespace AutoCadLib
                 Test.Run(config);
         }
 
+        /// <summary>
+        /// Get run configuration
+        /// </summary>
         static AcadRunConfig GetConfig()
         {
+            // get file path to the xml run configuration
             var fp = GetConfigFilePath();
             if (File.Exists(fp))
             {
@@ -29,6 +36,10 @@ namespace AutoCadLib
             else return null;
         }
 
+        /// <summary>
+        /// Read xml app setting configuration file
+        /// </summary>
+        /// <returns>File path to the xml run configuration</returns>
         static string GetConfigFilePath()
         {
             var appConfig = ConfigurationManager.OpenExeConfiguration(Assembly.GetExecutingAssembly().Location);

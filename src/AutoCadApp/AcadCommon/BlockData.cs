@@ -4,6 +4,9 @@ using System.Xml.Serialization;
 
 namespace AcadCommon
 {
+    /// <summary>
+    /// XML serialization utilities
+    /// </summary>
     public static class BlockData
     {
         public static string SerializeToXml(DrawingDTO dwg)

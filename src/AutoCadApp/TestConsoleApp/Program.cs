@@ -1,4 +1,5 @@
 ﻿using AcadCommon;
+using AcadRun;
 using System.Configuration;
 
 namespace TestConsoleApp
@@ -7,9 +8,13 @@ namespace TestConsoleApp
     {
         static void Main(string[] args)
         {
-            SetRunConfig();
             var config = SetRunConfig();
+            FileUtil.ClearDwgExportFiles(config.AcadExportFolderPath);
+            SaveConfig(config);
             CreateDrawingFiles(config);
+
+            var scrArgs = RunScript.GetArgs(config.AcadScriptFilePath);
+            RunScript.RunScan(config.AcadProgramFolder, scrArgs, config.ScriptTimeOutMinute);
         }
 
         static AcadRunConfig SetRunConfig()
@@ -31,10 +36,17 @@ namespace TestConsoleApp
                 DwgFileListPath = Path.Combine(wf, settings["dwgFileList"]!),
             };
 
-            var xml = BlockData.SerializeToXml(config);
-            FileUtil.SaveXml(xml, Path.Combine(wf, settings["configXml"]!));
-
             return config;
+        }
+
+        static void SaveConfig(AcadRunConfig config)
+        {
+            var xml = BlockData.SerializeToXml(config);
+            FileUtil.SaveXml(xml,
+                Path.Combine(
+                    config.AcadExportFolderPath, 
+                    ConfigurationManager.AppSettings["configXml"]!
+                ));
         }
 
         static void CreateDrawingFiles(AcadRunConfig config)
