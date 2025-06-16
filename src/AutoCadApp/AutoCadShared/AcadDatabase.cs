@@ -85,7 +85,10 @@ namespace AutoCadShared
         /// </summary>
         public IEnumerable<DBObject> GetDBOjects(ObjectIdCollection objIds,
             OpenMode mode = OpenMode.ForRead) =>
-            objIds.Cast<ObjectId>().Select(obj => GetDBObject(obj, mode)).ToList();
+            objIds.Cast<ObjectId>()
+                .Select(oid => GetDBObject(oid, mode))
+                .Where(obj => obj != null)
+                .ToList();
 
         #endregion
 

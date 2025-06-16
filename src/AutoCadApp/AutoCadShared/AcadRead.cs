@@ -283,7 +283,11 @@ namespace AutoCadShared
                     Name = bl.Name.ToString(),
                     Layer = bl.Layer,
                     Rotation = bl.Rotation,
-                    Attrs = acDB.GetEntities<AttributeReference>(bl.AttributeCollection.Cast<ObjectId>())
+                    Attrs = acDB.GetEntities<AttributeReference>(
+                            bl.AttributeCollection
+                                .Cast<ObjectId>()
+                                .Where(oid => oid.ObjectClass.DxfName == "ATTRIB")
+                        )
                         .Select(attref => new BlockAttrDTO { Tag = attref.Tag, TextString = attref.TextString })
                         .ToArray()
                 })
