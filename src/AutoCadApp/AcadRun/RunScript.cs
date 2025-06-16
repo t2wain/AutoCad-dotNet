@@ -11,6 +11,9 @@ namespace AcadRun
     {
         public static string AppName = "accoreconsole.exe";
 
+        /// <summary>
+        /// Create arguments to pass to accoreconsole.exe
+        /// </summary>
         public static string GetArgs(string scriptPath, string filePath = null)
         {
             var arg = $"/s {scriptPath}";

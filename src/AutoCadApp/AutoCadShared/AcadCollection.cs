@@ -1,5 +1,4 @@
 ﻿using Autodesk.AutoCAD.DatabaseServices;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -61,11 +60,14 @@ namespace AutoCadShared
         {
             var msColId = GetEntities(acDB.GetModelSpaceBlockTableRecord());
             var psColId = GetEntities(acDB.GetPaperSpaceBlockTableRecord());
+
+            // merge the two collections
             var colObjId = GetObjectIds(msColId.Cast<ObjectId>(), psColId);
+
+            // filter the collection for blocks only
             return GetObjectIds(
                 colObjId.Cast<ObjectId>()
-                    .Where(o => o.ObjectClass.DxfName == "INSERT"), 
-                msColId);
+                    .Where(o => o.ObjectClass.DxfName == "INSERT"));
         }
 
         /// <summary>

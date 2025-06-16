@@ -15,6 +15,8 @@ namespace AutoCadLib
         [CommandMethod("RunTest")]
         public static void RunTest()
         {
+            // Custom command cannot accept parameters.
+            // Utilize configuration file instead to pass parameters.
             var config = GetConfig();
             if (config != null)
                 Test.Run(config);
@@ -47,7 +49,11 @@ namespace AutoCadLib
             string wf = settings["acadWorkingFolder"].Value;
             if (string.IsNullOrEmpty(wf))
                 wf = "ACADSCAN";
+
+            // Ensure working folder created.
+            // Working folder could be created n user's temp folder. 
             wf = FileUtil.CreateTempFolder(wf);
+
             return Path.Combine(wf, settings["configXml"].Value);
         }
     }
