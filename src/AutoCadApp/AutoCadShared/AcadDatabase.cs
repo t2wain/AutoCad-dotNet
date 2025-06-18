@@ -43,8 +43,10 @@ namespace AutoCadShared
         {
             if (_disposeAll)
             {
-                this._acTran.Dispose();
-                this._acDB.Dispose();
+                if (this._acTran != null)
+                    this._acTran.Dispose();
+                if (this._acDB != null)
+                    this._acDB.Dispose();
             }
             this._acDB = null;
             this._acTran = null;
